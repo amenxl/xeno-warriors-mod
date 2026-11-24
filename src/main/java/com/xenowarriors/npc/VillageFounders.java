@@ -38,7 +38,9 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID)
 public final class VillageFounders {
     public static final String TAG = "xw_founder";
-    public static final int RESPAWN = 5 * 60 * 20, NEW_PERSON_EVERY = 2 * 60 * 20, WANT = 6, MISSING_AFTER = 60 * 20;
+    public static final int WANT = 6, MISSING_AFTER = 60 * 20;
+    /** 5 minutes to come back; a new person every 2 minutes (tests shorten them). */
+    public static int RESPAWN = 5 * 60 * 20, NEW_PERSON_EVERY = 2 * 60 * 20;
     public static final double HEALTH = 300, DAMAGE = 14, ARMOR = 10, REGEN = 2F;   // (regen: health a second)
     private static final UUID HP = UUID.fromString("5b1f7d4e-3c2a-4e8b-9a61-0c7d2e4f8a10"), DMG = UUID.fromString("5b1f7d4e-3c2a-4e8b-9a61-0c7d2e4f8a11"),
             ARM = UUID.fromString("5b1f7d4e-3c2a-4e8b-9a61-0c7d2e4f8a12");

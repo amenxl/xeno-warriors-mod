@@ -199,6 +199,48 @@ public final class RebuildTests {
         // a closer look from the other side
         step(null, () -> server(p -> { if (blast != null) look(p, mc, blast, -12, 6); }), 30);
         step("after_close", () -> {}, 2);
+        // ---- its two founders: there, strong; one dies and is back later; down to nobody, they bring new people
+        final Object[] fd = new Object[3];
+        step(null, () -> server(p -> {
+            ServerLevel l = p.serverLevel();
+            var fs = com.xenowarriors.npc.VillageFounders.foundersOf(l, village.anchor);
+            java.util.Set<String> roles = new java.util.HashSet<>();
+            for (var f : fs) roles.add(f.getPersistentData().getString("xw_founder_role"));
+            boolean strong = !fs.isEmpty() && fs.get(0).getMaxHealth() >= 300;
+            log("founders: " + fs.size() + " " + roles + " health " + (fs.isEmpty() ? 0 : fs.get(0).getMaxHealth()) + " names " + fs.stream().map(f -> f.getName().getString()).toList()
+                    + (fs.size() == 2 && roles.contains("boy") && roles.contains("girl") && strong ? " OK" : " FAIL"));
+            if (!fs.isEmpty()) look(p, mc, fs.get(0).blockPosition(), 5, 3);
+        }), 120);
+        step("founders", () -> {}, 2);
+        step(null, () -> server(p -> {
+            ServerLevel l = p.serverLevel();
+            com.xenowarriors.npc.VillageFounders.RESPAWN = 300; com.xenowarriors.npc.VillageFounders.NEW_PERSON_EVERY = 100;
+            var fs = com.xenowarriors.npc.VillageFounders.foundersOf(l, village.anchor);
+            if (fs.isEmpty()) return;
+            var f = fs.get(0);
+            f.hurt(l.damageSources().genericKill(), Float.MAX_VALUE);
+            fd[0] = f.getPersistentData().getString("xw_founder_role"); fd[1] = com.xenowarriors.npc.VillageFounders.respawned;
+            // everyone else in the village gone
+            var area = new net.minecraft.world.phys.AABB(village.anchor).inflate(96);
+            for (var h : l.getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, area, h -> !com.xenowarriors.npc.VillageFounders.is(h))) h.discard();
+            for (var v : l.getEntitiesOfClass(net.minecraft.world.entity.npc.Villager.class, area)) v.discard();
+            log("founders: the " + fd[0] + " killed, the village emptied");
+        }), 100);
+        step(null, () -> server(p -> {
+            var fs = com.xenowarriors.npc.VillageFounders.foundersOf(p.serverLevel(), village.anchor);
+            log("founders: 5s after - " + fs.size() + " left (not back yet: " + (fs.size() == 1 ? "OK" : "FAIL") + ")");
+            fd[2] = com.xenowarriors.npc.VillageFounders.newPeople;
+        }), 400);
+        step(null, () -> server(p -> {
+            var fs = com.xenowarriors.npc.VillageFounders.foundersOf(p.serverLevel(), village.anchor);
+            boolean back = fs.size() == 2 && com.xenowarriors.npc.VillageFounders.respawned > (Integer) fd[1];
+            log("founders: after the wait the " + fd[0] + " is back: " + fs.size() + (back ? " OK" : " FAIL"));
+        }), 400);
+        step(null, () -> server(p -> {
+            int n = com.xenowarriors.npc.VillageFounders.newPeople - (Integer) fd[2];
+            log("founders: new people brought to the empty village: " + n + (n > 0 ? " OK" : " FAIL"));
+            com.xenowarriors.npc.VillageFounders.RESPAWN = 5 * 60 * 20; com.xenowarriors.npc.VillageFounders.NEW_PERSON_EVERY = 2 * 60 * 20;
+        }), 2);
     }
 
     /** Puts the player (the camera) d blocks south-east of the target, h up, looking at it. */
