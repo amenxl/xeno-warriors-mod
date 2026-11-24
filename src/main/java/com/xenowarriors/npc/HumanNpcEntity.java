@@ -95,6 +95,12 @@ public class HumanNpcEntity extends PathfinderMob {
     public void setLook(String l) { entityData.set(LOOK, l == null ? "" : l); }
     public boolean possessed() { return entityData.get(POSSESSED); }
     public boolean fighter() { return entityData.get(FIGHTER); }
+    /** (Village founders) a set look from the townsfolk ones, and a fighter. */
+    public void setFounder(String look) {
+        for (int i = 0; i < NpcLooks.HUMANS.length; i++) if (NpcLooks.HUMANS[i].equals(look)) entityData.set(VARIANT, i);
+        entityData.set(FIGHTER, true);
+        entityData.set(SKY_HATER, false);
+    }
 
     /** Came running from the village to fight a Distortion (see Distortions.callDefenders): goes home once it's gone. */
     public static final String DEFENDER = "xw_distortion_defender";
@@ -344,6 +350,7 @@ public class HumanNpcEntity extends PathfinderMob {
     /** A soul takes them: in the open (hostile, dark) or hidden (no sign). */
     public void possess(boolean hidden) {
         if (com.xenowarriors.journey.JourneyGuide.is(this)) return;          // (the Journey Guide stays himself)
+        if (VillageFounders.is(this)) return;                                 // (a village's founders are too strong-willed)
         possessedSince = level().getGameTime();
         reported = false;
         if (hidden) HiddenSouls.hide(this);
