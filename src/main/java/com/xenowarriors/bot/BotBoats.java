@@ -75,6 +75,8 @@ public final class BotBoats {
 
     /** A boat from its bag (or made now) into the water by it, and in it goes. */
     private static boolean launch(PartyBotEntity b, ServerLevel l) {
+        ServerPlayer o = b.owner();
+        if (o != null && o.level() == l && o.getVehicle() == null && !o.isInWater() && o.onGround() && b.distanceToSqr(o) < 8 * 8) return false;   // (you're right here on land: no boat - it'd only get straight back out)
         BlockPos at = water(l, b);
         if (at == null) return false;
         int slot = boatSlot(b);

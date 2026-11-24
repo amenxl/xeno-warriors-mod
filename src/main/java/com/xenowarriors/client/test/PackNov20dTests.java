@@ -167,6 +167,10 @@ final class PackNov20dTests {
             int regen = 0;
             for (var it : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(8)))
                 if (it.getItem().is(com.xenowarriors.item.ModItems.KARMA_REGEN_POTION.get()) || it.getItem().is(com.xenowarriors.item.ModItems.KARMA_POTION.get())) { regen++; it.discard(); }
+            for (int i = 0; i < p.getInventory().getContainerSize(); i++) {                // (or already picked up)
+                var st = p.getInventory().getItem(i);
+                if (st.is(com.xenowarriors.item.ModItems.KARMA_REGEN_POTION.get()) || st.is(com.xenowarriors.item.ModItems.KARMA_POTION.get())) { regen += st.getCount(); p.getInventory().setItem(i, ItemStack.EMPTY); }
+            }
             PackTests.check("karma potions: an enemy you beat can drop a Karma Potion and a Karma Regeneration Potion", com.xenowarriors.item.KarmaPotionDrops.dropped - kr[0] == 2 && regen == 2, "dropped " + (com.xenowarriors.item.KarmaPotionDrops.dropped - kr[0]) + " on the ground " + regen);
             kr[1] = com.xenowarriors.item.KarmaRegenPotionItem.regenTicks;
             new ItemStack(com.xenowarriors.item.ModItems.KARMA_REGEN_POTION.get()).finishUsingItem(p.serverLevel(), p);
