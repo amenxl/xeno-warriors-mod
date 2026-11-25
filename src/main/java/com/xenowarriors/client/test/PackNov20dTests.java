@@ -309,7 +309,7 @@ final class PackNov20dTests {
             if (b == null) return;
             for (int i = 0; i < b.inventory.getContainerSize(); i++) b.inventory.setItem(i, ItemStack.EMPTY);
             b.inventory.addItem(new ItemStack(Items.OAK_LOG, 3));
-            b.moveTo(sea.getX() + 0.5, sea.getY() - 0.5, sea.getZ() - 10.5, 180F, 0F);       // (out in the water)
+            b.moveTo(sea.getX() + 0.5, sea.getY() - 0.5, sea.getZ() + SEA_L / 2 - 16.5, 180F, 0F);   // (out in the water, 20 blocks off: near enough that it doesn't just catch up by teleporting)
             ship[0] = b;
         }), 20));
         l.add(new Step("bot_boat", () -> {}, 160));
