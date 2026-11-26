@@ -238,10 +238,14 @@ public final class StorySides {
 
     private static Mob spawnNear(ServerPlayer p, Side s) {
         ServerLevel l = p.serverLevel();
-        double a = p.getRandom().nextDouble() * Math.PI * 2, d = 10 + p.getRandom().nextDouble() * 8;
-        int x = (int) Math.floor(p.getX() + Math.cos(a) * d), z = (int) Math.floor(p.getZ() + Math.sin(a) * d);
-        int y = l.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-        if (Math.abs(y - p.getY()) > 12) y = (int) p.getY();
+        int x = p.getBlockX(), y = p.getBlockY(), z = p.getBlockZ();
+        for (int t = 0; t < 16; t++) {                                                  // (on ground near you - never in mid-air past a ledge, where it'd just fall)
+            double a = p.getRandom().nextDouble() * Math.PI * 2, d = (t < 10 ? 10 : 4) + p.getRandom().nextDouble() * (t < 10 ? 8 : 4);
+            int tx = (int) Math.floor(p.getX() + Math.cos(a) * d), tz = (int) Math.floor(p.getZ() + Math.sin(a) * d);
+            int ty = l.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, tx, tz);
+            if (Math.abs(ty - p.getY()) > 12 || !l.getBlockState(new BlockPos(tx, ty - 1, tz)).isSolid()) continue;
+            x = tx; y = ty; z = tz; break;
+        }
         StoryDefs.Spawn sp = new StoryDefs.Spawn(s.def.e(), 1, false, null, 0F, false);
         if (StoryRun.corrupted(s.def.e())) StoryRun.nightFor(p.server);                    // (C-souls: it's night first)
         Mob m = StoryRun.makeFoe(l, sp, new BlockPos(x, y, z));
