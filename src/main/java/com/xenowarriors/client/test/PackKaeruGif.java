@@ -36,8 +36,8 @@ final class PackKaeruGif {
             var c = mc.level.getEntity(cam[0]);
             if (c != null) mc.setCameraEntity(c);
         }, 60));
-        // she starts after 90 still ticks; the stretch runs 300 - frames every 4 ticks from just before it
-        for (int f = 0; f < 80; f++) {
+        // she starts after 90 still ticks; the stretch runs 592 - frames every 4 ticks from just before it
+        for (int f = 0; f < 155; f++) {
             int k = f;
             l.add(new Step(String.format("kaerugif_%03d", f), () -> {
                 if (k % 10 == 0 && mc.player != null) PackTests.log("kaerugif frame " + k + " t " + com.xenowarriors.client.KaeruStretch.time(mc.player) + " holder " + com.xenowarriors.client.Idles.holder(mc.player));

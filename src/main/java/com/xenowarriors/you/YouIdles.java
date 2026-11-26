@@ -24,7 +24,7 @@ public final class YouIdles {
             case GARRY -> "Beatboxes into a mic";
             case KEITA -> "Nods off on their feet";
             case YURI -> "Opens a holo laptop and types";
-            case KAERU -> "Stretches: arms over her head, side to side, arms across";
+            case KAERU -> "Stretches: arms up, side to side, legs, high kicks";
             default -> "";
         };
     }
