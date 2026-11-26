@@ -23,8 +23,8 @@ final class PackKaeruGif {
             p.serverLevel().setDayTime(6000);
             var s = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
             if (s != null) {
-                s.moveTo(p.getX() + 0.6, p.getY() - 0.25, p.getZ() + 3.4, 170F, 6F);
-                s.setYHeadRot(170F);
+                s.moveTo(p.getX() + 2.3, p.getY() - 0.25, p.getZ() + 2.6, 138F, 6F);     // (three-quarter view: the leg stretches read from here)
+                s.setYHeadRot(138F);
                 s.setInvisible(true); s.setNoGravity(true); s.setInvulnerable(true);
                 p.serverLevel().addFreshEntity(s);
                 cam[0] = s.getId();
