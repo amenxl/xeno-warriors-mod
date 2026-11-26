@@ -40,7 +40,7 @@ final class PackKaeruGif {
         for (int f = 0; f < 155; f++) {
             int k = f;
             l.add(new Step(String.format("kaerugif_%03d", f), () -> {
-                if (k % 10 == 0 && mc.player != null) PackTests.log("kaerugif frame " + k + " t " + com.xenowarriors.client.KaeruStretch.time(mc.player) + " holder " + com.xenowarriors.client.Idles.holder(mc.player));
+                if (k % 10 == 0 && mc.player != null) PackTests.log("kaerugif frame " + k + " t " + com.xenowarriors.client.KaeruStretch.time(mc.player) + " holder " + com.xenowarriors.client.Idles.holder(mc.player) + " tail " + com.xenowarriors.client.KaeruStretch.tailMoves);
             }, 4));
         }
         l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; }, 5));

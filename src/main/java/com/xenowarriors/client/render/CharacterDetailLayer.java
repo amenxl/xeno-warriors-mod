@@ -604,6 +604,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         com.xenowarriors.client.LimbBend.copy(parent.leftArm, model.leftArm);
         com.xenowarriors.client.LimbBend.copy(parent.rightLeg, model.rightLeg);
         com.xenowarriors.client.LimbBend.copy(parent.leftLeg, model.leftLeg);
+        if (type == CharacterType.KAERU && model == models.get(CharacterType.KAERU)) com.xenowarriors.client.KaeruStretch.tail(model, player, ageInTicks);   // (her tail lifts while she stretches up)
 
         if (model.hasWings()) {
             boolean preview = ClientCharacterData.isPreviewing();

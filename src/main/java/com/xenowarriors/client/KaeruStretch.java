@@ -116,4 +116,42 @@ public final class KaeruStretch {
         if (q[14] != 0F || q[15] != 0F) LimbBend.extraKnees(p, q[14] * w, q[15] * w);
         m.hat.copyFrom(m.head);                                             // (PlayerModel copies the rest onto the sleeves after this)
     }
+
+    // her tail: three pieces hanging off the back of her waist (one pivot, so they move as one)
+    private static final String[] TAIL = {"n48", "n49", "n50"};
+
+    /**
+     * Her tail while she stretches her arms up: it lifts out behind her and swishes, and swings the other way to each
+     * side lean (back to hanging down once her arms come down). Called by CharacterDetailLayer each frame.
+     */
+    public static void tail(com.xenowarriors.client.render.DetailModel m, Player p, float age) {
+        ModelPart b = m.body;
+        ModelPart[] parts = new ModelPart[TAIL.length];
+        for (int i = 0; i < TAIL.length; i++) {
+            if (!b.hasChild(TAIL[i])) return;
+            parts[i] = b.getChild(TAIL[i]);
+            parts[i].resetPose();                                           // (the model is shared: back to hanging every frame)
+        }
+        if (!kaeru(p)) return;
+        int t0 = time(p);
+        if (t0 < 0) return;
+        float t = (t0 + (age - (int) age)) % (CYCLE + REST_GAP);
+        float up = ramp(t, 10, 25) * (1F - ramp(t, 205, 218));              // arms up: overhead, both leans, back up
+        if (up <= 0F) return;
+        float side = t < 80 ? 0F : t < 92 ? ramp(t, 80, 92) : t < 125 ? 1F : t < 150 ? 1F - 2F * ramp(t, 125, 150)
+                : t < 185 ? -1F : -1F + ramp(t, 185, 205);                  // (+1 leaning right, -1 left)
+        float swish = Mth.sin(age * 0.22F) * 0.3F + Mth.sin(age * 0.53F) * 0.08F;
+        for (ModelPart part : parts) {
+            part.xRot -= 1.05F * up + Mth.sin(age * 0.17F) * 0.06F * up;     // lifted out behind her (a little bounce)
+            part.yRot += (swish - side * 0.45F) * up;                        // swishing, swung away from the lean
+        }
+        tailMoves++;
+    }
+    /** Frames her tail was posed by the stretch (tests). */
+    public static int tailMoves;
+
+    private static float ramp(float t, float a, float b) {
+        float x = Mth.clamp((t - a) / (b - a), 0F, 1F);
+        return x * x * (3 - 2 * x);
+    }
 }
