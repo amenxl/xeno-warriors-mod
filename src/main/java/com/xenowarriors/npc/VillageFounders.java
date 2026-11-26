@@ -85,6 +85,7 @@ public final class VillageFounders {
         Data d = data(l);
         long now = l.getGameTime();
         for (RebuildData.Village v : rd.villages()) {
+            if ("hut".equals(v.kind)) continue;                                              // (a hut one townsperson built isn't a village: no founders, or every new hut would fill up with people)
             BlockPos a = v.anchor;
             if (!l.isPositionEntityTicking(a) || l.getNearestPlayer(a.getX(), a.getY(), a.getZ(), 96, false) == null) continue;
             CompoundTag t = d.of(a);
