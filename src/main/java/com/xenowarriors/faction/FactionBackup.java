@@ -45,6 +45,8 @@ public final class FactionBackup {
     private static final UUID HP = UUID.fromString("5b1c7e20-9f4a-4c3e-b8d1-6a2f0e9c4d71"), DMG = UUID.fromString("5b1c7e20-9f4a-4c3e-b8d1-6a2f0e9c4d72");
     /** (Tests) backups called, people sent, sent home. */
     public static int called, sent, gone;
+    /** (Tests) times one of them took on what you were fighting. */
+    public static int joinedYours;
 
     /** Who this backup fights for (null: not backup). */
     public static UUID ownerOf(net.minecraft.world.entity.Entity e) {
@@ -191,7 +193,7 @@ public final class FactionBackup {
                     if (d < best) { best = d; pick = x; }
                 }
             }
-            if (pick != null) m.setTarget(pick);
+            if (pick != null) { if (pick == hit) joinedYours++; m.setTarget(pick); }
         }
     }
 

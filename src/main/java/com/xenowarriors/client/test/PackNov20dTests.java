@@ -760,11 +760,13 @@ final class PackNov20dTests {
         // ---- story: a split fight in the SR tunnels (Rhalix in the other room), the bars open when your room's clear; a bot going down counts
         int[] sp = new int[1];
         int[] rtBefore = new int[1];
+        int[] SR0 = new int[2];
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.arena(p); PackTests.clear(p);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             sp[0] = com.xenowarriors.story.StoryRun.splitBarsOpened;
             rtBefore[0] = com.xenowarriors.story.StoryRun.roomTargets;
+            SR0[0] = com.xenowarriors.story.StoryRun.spawnedAll; SR0[1] = com.xenowarriors.story.StoryRun.spawnedReach;
             com.xenowarriors.story.StoryRun.testStep(p, "rhalix", "r2", 3);
         }), 80));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setXRot(5); }, 10));
@@ -773,7 +775,8 @@ final class PackNov20dTests {
                     && !com.xenowarriors.story.StoryRun.roomBForTest(p).isEmpty(), "split " + com.xenowarriors.story.StoryRun.splitForTest(p) + " other room " + com.xenowarriors.story.StoryRun.roomBForTest(p).size()
                     + " " + com.xenowarriors.story.StoryRun.stepForTest(p));
             int[] rf = com.xenowarriors.story.StoryRun.reachForTest(p);
-            PackTests.check("story: enemies only appear where you can get to them", rf[1] > 0 && rf[0] == rf[1], "reachable " + rf[0] + " of " + rf[1]);
+            int sa = com.xenowarriors.story.StoryRun.spawnedAll - SR0[0], sr = com.xenowarriors.story.StoryRun.spawnedReach - SR0[1];
+            PackTests.check("story: enemies only appear where you can get to them", sa > 0 && sr == sa, "appeared reachable " + sr + " of " + sa + " (now, after moving about: " + rf[0] + " of " + rf[1] + ")");
             PackTests.check("story: buildings can be broken, the ground can't", rf[2] == 1 && rf[3] == 0, "building " + rf[2] + " ground " + rf[3]);
             int held = 0, following = 0;
             for (PartyBotEntity b : PartyBots.bots(p)) if (com.xenowarriors.story.StoryRun.holdsRoom(b)) { held++; if (b.getTarget() == null && b.distanceToSqr(p) < 4 * 4) following++; }
@@ -827,7 +830,7 @@ final class PackNov20dTests {
             PackTests.server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE));
         }, 5));
         // ---- faction backup from the phone: ten of them, they fight what you fight, and go home when you leave
-        int[] fb2 = new int[2];
+        int[] fb2 = new int[2], fbJ = new int[1];
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.arena(p); PackTests.clear(p);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
@@ -838,6 +841,7 @@ final class PackNov20dTests {
         l.add(new Step("phone_factions", () -> mc.setScreen(null), 5));
         l.add(new Step(null, () -> PackTests.server(p -> {
             fb2[0] = com.xenowarriors.faction.FactionBackup.sent;
+            fbJ[0] = com.xenowarriors.faction.FactionBackup.joinedYours;
             p.getPersistentData().remove("xw_backup_cd_GOV");
             boolean ok = com.xenowarriors.faction.FactionBackup.call(p, com.xenowarriors.faction.Faction.GOV);
             boolean no = com.xenowarriors.faction.FactionBackup.why(p, com.xenowarriors.faction.Faction.SR) != null;
@@ -850,7 +854,8 @@ final class PackNov20dTests {
             int on = 0;
             for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), x -> com.xenowarriors.faction.FactionBackup.ownerOf(x) != null))
                 if (m.getTarget() instanceof net.minecraft.world.entity.monster.Husk) on++;
-            PackTests.check("backup: they go for what you're fighting", on > 0, "on the husk " + on);
+            int joined = com.xenowarriors.faction.FactionBackup.joinedYours - fbJ[0];          // (they may well have beaten it already)
+            PackTests.check("backup: they go for what you're fighting", on > 0 || joined > 0, "on the husk " + on + " took it on " + joined);
             fb2[1] = com.xenowarriors.faction.FactionBackup.gone;
             p.connection.teleport(p.getX() + 140, p.getY() + 20, p.getZ(), 0F, 0F);
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
@@ -936,13 +941,13 @@ final class PackNov20dTests {
             var lv = p.serverLevel();
             BlockPos c = kp[0];
             int dirt = 0, stone = 0, deep = 0, bedrock = 0;
-            for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) {
+            for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++) {                   // (the whole floor: it crushes at random spots)
                 if (lv.getBlockState(c.offset(x, -1, z)).isAir()) dirt++;
                 if (lv.getBlockState(c.offset(x, -2, z)).isAir()) stone++;
                 if (lv.getBlockState(c.offset(x, -3, z)).isAir()) deep++;
                 if (lv.getBlockState(c.offset(x, -4, z)).is(Blocks.BEDROCK)) bedrock++;
             }
-            PackTests.check("kishi: a very high level dome crushes dirt, stone and deeper inside it - never bedrock", com.xenowarriors.entity.KishiDomeEntity.crushed > kc[0] && dirt > 0 && stone > 0 && deep > 0 && bedrock == 9,
+            PackTests.check("kishi: a very high level dome crushes dirt, stone and deeper inside it - never bedrock", com.xenowarriors.entity.KishiDomeEntity.crushed > kc[0] && dirt > 0 && stone > 0 && deep > 0 && bedrock == 81,
                     "crushed " + (com.xenowarriors.entity.KishiDomeEntity.crushed - kc[0]) + " dirt " + dirt + " stone " + stone + " deepslate " + deep + " bedrock left " + bedrock);
             p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
         }), 30));

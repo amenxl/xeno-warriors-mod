@@ -618,11 +618,21 @@ public final class StoryRun {
                 // a split fight: some of each wave come into the other room (never the boss)
                 int room = shareB > 0 && !sp.boss() && (made++ * shareB) % 1F + shareB >= 1F ? 1 : 0;
                 Vec3 at = null;
-                for (int t = 0; t < 10; t++) {                                     // (somewhere it can stand, not inside a wall or a pillar)
+                boolean clear = false;
+                for (int t = 0; t < 10 && !clear; t++) {                           // (somewhere it can stand, not inside a wall or a pillar)
                     at = StoryScenes.fit(r.split && shareB > 0 ? roomSpot(r, room, l.getRandom()) : StoryScenes.spawnSpot(r.slot, r.place, l.getRandom()), reach);
                     m.moveTo(at.x, at.y, at.z, l.getRandom().nextFloat() * 360F, 0F);
-                    if (l.noCollision(m)) break;
+                    clear = l.noCollision(m);
                 }
+                if (!clear && reach != null && !reach.isEmpty()) {                 // (all ten tried were blocked: any open spot you can get to)
+                    List<BlockPos> open = new ArrayList<>(reach);
+                    for (int t = 0; t < 24 && !clear; t++) {
+                        BlockPos o = open.get(l.getRandom().nextInt(open.size()));
+                        m.moveTo(o.getX() + 0.5, o.getY(), o.getZ() + 0.5, l.getRandom().nextFloat() * 360F, 0F);
+                        clear = l.noCollision(m);
+                    }
+                }
+                if (reach != null && !reach.isEmpty()) { spawnedAll++; BlockPos f = m.blockPosition(); if (reach.contains(f) || reach.contains(f.below())) spawnedReach++; }
                 prepare(m, sp, r, dmz);
                 l.addFreshEntity(m);
                 l.sendParticles(ParticleTypes.PORTAL, m.getX(), m.getY() + 1, m.getZ(), 20, .4, .6, .4, .3);
@@ -1367,6 +1377,9 @@ public final class StoryRun {
     public static int buildingBlocksBroken;
 
     /** (Tests) how many of this run's foes stand where you can get to them, of how many; and whether a building block / the ground may be broken. */
+    /** (Tests) story foes placed, and of those where you can get to them, when they appeared. */
+    public static int spawnedAll, spawnedReach;
+
     public static int[] reachForTest(ServerPlayer p) {
         Run r = runOf(p);
         ServerLevel l = p.serverLevel();
