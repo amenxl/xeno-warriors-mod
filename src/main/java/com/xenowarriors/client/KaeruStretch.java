@@ -51,23 +51,24 @@ public final class KaeruStretch {
         return s == null || s[0] < AFTER ? -1 : s[0] - AFTER;
     }
 
-    // A pose: rArm x y z, lArm x y z, body x z, head x z, rLeg x z, lLeg x z  (legs: + z swings the right one out, - the left one)
+    // A pose: rArm x y z, lArm x y z, body x z (kept 0), head x z, rLeg x z, lLeg x z (+ z swings the right one out, - the left one),
+    // then the knees (right, left: + folds the shin back) - so a pulled-up foot, a kick's push-off and a lunge's bent knee look right
     private static float[] P(float... v) { return v; }
-    private static final float[] REST    = P(0F, 0F, 0F,        0F, 0F, 0F,        0F, 0F,      0F, 0F,       0F, 0F,       0F, 0F);
-    private static final float[] UP      = P(-3.05F, 0.1F, -0.18F, -3.05F, -0.1F, 0.18F, -0.1F, 0F,  -0.45F, 0F,   0.06F, 0F,    0.06F, 0F);
-    private static final float[] LEAN_R  = P(-2.85F, 0.1F, 0.35F, -2.75F, -0.1F, 0.75F, -0.05F, 0.14F, -0.2F, 0.3F, 0F, -0.12F,   0F, -0.22F);
-    private static final float[] LEAN_L  = P(-2.75F, 0.1F, -0.75F, -2.85F, -0.1F, -0.35F, -0.05F, -0.14F, -0.2F, -0.3F, 0F, 0.22F, 0F, 0.12F);
-    private static final float[] CROSS_R = P(-1.5F, -0.95F, 0F,   -1.15F, 0.55F, 0F,  0F, 0F,     0.1F, -0.2F,  0F, 0.05F,    0F, -0.05F);
-    private static final float[] CROSS_L = P(-1.15F, -0.55F, 0F,  -1.5F, 0.95F, 0F,   0F, 0F,     0.1F, 0.2F,   0F, 0.05F,    0F, -0.05F);
+    private static final float[] REST    = P(0F, 0F, 0F,        0F, 0F, 0F,        0F, 0F,      0F, 0F,       0F, 0F,       0F, 0F,      0F, 0F);
+    private static final float[] UP      = P(-3.05F, 0.1F, -0.18F, -3.05F, -0.1F, 0.18F, 0F, 0F,     -0.45F, 0F,   0.04F, 0F,    0.04F, 0F,   0F, 0F);
+    private static final float[] LEAN_R  = P(-2.85F, 0.1F, 0.35F, -2.75F, -0.1F, 0.75F, 0F, 0F,     -0.2F, 0.3F,  0F, 0.06F,      0F, -0.16F,  0F, 0.15F);
+    private static final float[] LEAN_L  = P(-2.75F, 0.1F, -0.75F, -2.85F, -0.1F, -0.35F, 0F, 0F,   -0.2F, -0.3F, 0F, 0.16F,      0F, -0.06F,  0.15F, 0F);
+    private static final float[] CROSS_R = P(-1.5F, -0.95F, 0F,   -1.15F, 0.55F, 0F,  0F, 0F,     0.1F, -0.2F,  0F, 0.04F,    0F, -0.04F,   0F, 0F);
+    private static final float[] CROSS_L = P(-1.15F, -0.55F, 0F,  -1.5F, 0.95F, 0F,   0F, 0F,     0.1F, 0.2F,   0F, 0.04F,    0F, -0.04F,   0F, 0F);
     // quad stretch: a foot pulled up behind her, that hand holding it, the other arm out for balance
-    private static final float[] QUAD_R  = P(0.75F, 0.15F, 0.12F, -0.2F, 0F, -1.2F,   0.06F, 0F,   0.15F, 0.1F,  1.35F, 0.04F,  0F, -0.03F);
-    private static final float[] QUAD_L  = P(-0.2F, 0F, 1.2F,     0.75F, -0.15F, -0.12F, 0.06F, 0F,  0.15F, -0.1F, 0F, 0.03F,    1.35F, -0.04F);
+    private static final float[] QUAD_R  = P(0.55F, 0.1F, 0.08F,  -0.2F, 0F, -1.2F,   0F, 0F,      0.15F, 0.1F,  0.3F, 0.02F,   0F, -0.03F,  1.9F, 0F);
+    private static final float[] QUAD_L  = P(-0.2F, 0F, 1.2F,     0.55F, -0.1F, -0.08F, 0F, 0F,     0.15F, -0.1F, 0F, 0.03F,    0.3F, -0.02F, 0F, 1.9F);
     // high kick: a leg swung straight up in front (like her art), arms out
-    private static final float[] KICK_R  = P(0.2F, 0F, 1.25F,     0.2F, 0F, -1.25F,  -0.12F, 0F,  -0.15F, 0F,   -1.75F, 0.05F, 0.1F, 0F);
-    private static final float[] KICK_L  = P(0.2F, 0F, 1.25F,     0.2F, 0F, -1.25F,  -0.12F, 0F,  -0.15F, 0F,   0.1F, 0F,     -1.75F, -0.05F);
+    private static final float[] KICK_R  = P(0.2F, 0F, 1.25F,     0.2F, 0F, -1.25F,  0F, 0F,      -0.15F, 0F,   -1.45F, 0.04F, 0.08F, 0F,  0F, 0.2F);
+    private static final float[] KICK_L  = P(0.2F, 0F, 1.25F,     0.2F, 0F, -1.25F,  0F, 0F,      -0.15F, 0F,   0.08F, 0F,    -1.45F, -0.04F, 0.2F, 0F);
     // side lunge: a leg out wide, leaning over it, hands on the other knee
-    private static final float[] LUNGE_R = P(-0.55F, 0.35F, 0.05F, -0.55F, -0.15F, 0F, 0.35F, 0.12F, 0.2F, 0.15F,  0F, 0.6F,     -0.35F, -0.12F);
-    private static final float[] LUNGE_L = P(-0.55F, 0.15F, 0F,   -0.55F, -0.35F, -0.05F, 0.35F, -0.12F, 0.2F, -0.15F, -0.35F, 0.12F, 0F, -0.6F);
+    private static final float[] LUNGE_R = P(-0.7F, 0.35F, 0.05F, -0.7F, -0.15F, 0F,  0F, 0F,      0.35F, 0.15F, -0.15F, 0.42F, -0.25F, -0.08F, 0.25F, 0.55F);
+    private static final float[] LUNGE_L = P(-0.7F, 0.15F, 0F,    -0.7F, -0.35F, -0.05F, 0F, 0F,    0.35F, -0.15F, -0.25F, 0.08F, -0.15F, -0.42F, 0.55F, 0.25F);
 
     /** The stretch's keyframes: {start tick, pose}; it holds each pose and eases between them. */
     private static final Object[][] KEYS = {
@@ -107,10 +108,12 @@ public final class KaeruStretch {
         float bob = t > 25 && t < 70 || t > 320 && t < 407 ? Mth.sin(age * 0.25F) * 0.04F : 0F;   // (a little wobble: up on her toes, on one foot)
         set(m.rightArm, w, q[0] + bob, q[1], q[2]);
         set(m.leftArm, w, q[3] + bob, q[4], q[5]);
-        set(m.body, w, q[6], 0F, q[7]);
+        // (the body itself never tips: it turns about the neck, so the hips would swing away from the legs and they'd look
+        //  cut off - the lean is all in the arms, head and legs, which turn at the shoulders and hips and stay joined on)
         set(m.head, w, q[8], m.head.yRot, q[9]);
         set(m.rightLeg, w, q[10], 0F, q[11]);
         set(m.leftLeg, w, q[12], 0F, q[13]);
+        if (q[14] != 0F || q[15] != 0F) LimbBend.extraKnees(p, q[14] * w, q[15] * w);
         m.hat.copyFrom(m.head);                                             // (PlayerModel copies the rest onto the sleeves after this)
     }
 }
