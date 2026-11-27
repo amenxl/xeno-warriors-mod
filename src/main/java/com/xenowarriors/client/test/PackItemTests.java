@@ -148,6 +148,21 @@ final class PackItemTests {
             if (m == mc.getModelManager().getMissingModel()) MISSING_MODEL.add(id(it));
         });
         tr(it, "name", () -> s.getHoverName().getString());
+        // right-click on this side too: the items that open a screen here (phone, books, maps...)
+        tr(it, "use (client)", () -> {
+            ItemStack c = new ItemStack(it);
+            ItemStack old = mc.player.getMainHandItem();
+            mc.player.setItemInHand(InteractionHand.MAIN_HAND, c);
+            try {
+                c.use(mc.level, mc.player, InteractionHand.MAIN_HAND);
+                if (mc.player.isUsingItem()) mc.player.stopUsingItem();
+            } finally { mc.player.setItemInHand(InteractionHand.MAIN_HAND, old); }
+        });
+    }
+
+    /** (the next step) a screen the client-side right-click opened: it draws a frame, then it's closed. */
+    private static void clientScreen(Minecraft mc, Item it) {
+        if (mc.screen != null) { SCREENS.add(id(it) + "(client)=" + mc.screen.getClass().getSimpleName()); mc.setScreen(null); }
     }
 
     static void build(Minecraft mc, List<Step> l) {
@@ -157,6 +172,7 @@ final class PackItemTests {
         for (Item it : all) {
             l.add(new Step(null, () -> PackTests.server(p -> server(p, it)), 4));
             l.add(new Step(null, () -> client(mc, it), 2));
+            l.add(new Step(null, () -> clientScreen(mc, it), 3));
         }
         l.add(new Step("items_done", () -> {
             if (mc.screen != null) { SCREENS.add("end=" + mc.screen.getClass().getSimpleName()); mc.setScreen(null); }
