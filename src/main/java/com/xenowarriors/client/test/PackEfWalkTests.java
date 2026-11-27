@@ -73,7 +73,7 @@ final class PackEfWalkTests {
     }
 
     static void build(Minecraft mc, List<Step> l) {
-        CharacterType t = CharacterType.KYRIE;
+        CharacterType t = CharacterType.SAM;        // (no wings: a winged bot took off partway along)
         List<String> noWalk = new ArrayList<>(), noRun = new ArrayList<>();
         l.add(new Step(null, () -> { mc.setScreen(null); EfBotBodies.off = false; UiTest_character(); PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p); }); }, 30));
         for (String w : WEAPONS) {
@@ -126,7 +126,8 @@ final class PackEfWalkTests {
             PackTests.check("efwalk: bots walk on Epic Fight's body with every weapon (legs move)", noWalk.isEmpty(), noWalk.toString());
             PackTests.check("efwalk: bots run on Epic Fight's body with every weapon", noRun.isEmpty(), noRun.toString());
             PackTests.check("efwalk: no errors on the bots' Epic Fight bodies", EfBotBodies.lastError == null, String.valueOf(EfBotBodies.lastError));
-            PackTests.log("efwalk: walk / run animations put on " + EfBotBodies.motionPlays);
+            PackTests.log("efwalk: walk / run animations put on by our fallback (Epic Fight didn't pick them itself) " + EfBotBodies.motionPlays);
+            PackTests.check("efwalk: Epic Fight picks the walk / run itself (no restarts from our fallback)", EfBotBodies.motionPlays <= 6, "fallback plays " + EfBotBodies.motionPlays);
             mc.options.hideGui = false;
             PackTests.server(p -> { PackTests.clear(p); bot = null; });
         }, 5));

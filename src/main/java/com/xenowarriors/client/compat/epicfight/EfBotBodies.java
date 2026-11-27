@@ -43,6 +43,7 @@ public final class EfBotBodies {
                     started++;
                 }
                 if (!patch.isEpicFightMode()) patch.toEpicFightMode(false);
+                input(patch, a);                                                 // (its "keys": Epic Fight works out walking / running from them)
                 walkMotion(patch, a);                                            // (Epic Fight never works out a remote player's walking itself: it's told)
                 patch.tick(new net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent(a));
                 walkMotion(patch, a);                                            // (and again after: its tick put a remote player back to idle)
@@ -87,6 +88,23 @@ public final class EfBotBodies {
         if (patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.IDLE || patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.WALK
                 || patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.RUN) patch.currentCompositeMotion = want;
         if (want != yesman.epicfight.api.animation.LivingMotions.IDLE) walkSet++;
+    }
+
+    /**
+     * The movement keys Epic Fight reads to tell standing from walking (a real player's game sends them: forward / back
+     * and left / right): a bot has none, so its body always looked like it was standing still and played the idle while
+     * it walked - legs frozen with a weapon out (the user's report). Worked out from how the bot really moved this tick,
+     * turned to where its body faces (backing away plays the walk backwards, as for a player).
+     */
+    private static void input(PlayerPatch<?> patch, BotAvatar a) {
+        PartyBotEntity b = a.bot();
+        double vx = b.getX() - b.xo, vz = b.getZ() - b.zo;
+        if (b.isPassenger() || vx * vx + vz * vz < 0.015 * 0.015) { patch.dx = 0; patch.dz = 0; return; }
+        double yaw = Math.toRadians(b.yBodyRot);
+        double fwd = -Math.sin(yaw) * vx + Math.cos(yaw) * vz, left = Math.cos(yaw) * vx + Math.sin(yaw) * vz;
+        double len = Math.sqrt(fwd * fwd + left * left);
+        patch.dz = fwd / len;
+        patch.dx = left / len;
     }
 
     /** (Tests) walk / run animations started on bots' bodies by playMotion. */
