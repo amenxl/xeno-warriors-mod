@@ -150,6 +150,8 @@ public final class ModItems {
     /** Human modification chip (Gov C2 tech) - made from Data Shards; for modded characters like Kyle later. */
     public static final RegistryObject<Item> MOD_CHIP = ITEMS.register("mod_chip", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> ROOM_TECH = ITEMS.register("room_tech", () -> new com.xenowarriors.room.RoomTechItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));
+    public static final RegistryObject<Item> ROOM_TECH_2 = ITEMS.register("room_tech_2", () -> new com.xenowarriors.room.RoomTechItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC), 2));
+    public static final RegistryObject<Item> ROOM_TECH_3 = ITEMS.register("room_tech_3", () -> new com.xenowarriors.room.RoomTechItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant(), 3));
     public static final RegistryObject<Item> RECARNET_PASS = ITEMS.register("recarnet_pass", () -> new com.xenowarriors.recarnet.RecarnetPassItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CRIMSON_HEART_SEED = ITEMS.register("crimson_heart_seed", () -> new com.xenowarriors.kaioken.CrimsonHeartSeedItem(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> AURORA_MEDICINE = ITEMS.register("aurora_medicine", () -> new com.xenowarriors.virus.AuroraMedicineItem(new Item.Properties().stacksTo(16)));

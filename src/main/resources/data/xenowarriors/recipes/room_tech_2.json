@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "KDK",
+  "DRD",
+  "KDK"
+ ],
+ "key": {
+  "K": {
+   "item": "xenowarriors:karma_crystal"
+  },
+  "D": {
+   "item": "xenowarriors:data_shard"
+  },
+  "R": {
+   "item": "xenowarriors:room_tech"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:room_tech_2"
+ }
+}

@@ -1,0 +1,7 @@
+{
+ "parent": "xenowarriors:item/room_tech",
+ "textures": {
+  "t": "xenowarriors:item/room_tech_2",
+  "particle": "xenowarriors:item/room_tech_2"
+ }
+}

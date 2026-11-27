@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "ADA",
+  "DRD",
+  "ADA"
+ ],
+ "key": {
+  "A": {
+   "item": "xenowarriors:aurora_gem"
+  },
+  "D": {
+   "item": "minecraft:diamond"
+  },
+  "R": {
+   "item": "xenowarriors:room_tech_2"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:room_tech_3"
+ }
+}

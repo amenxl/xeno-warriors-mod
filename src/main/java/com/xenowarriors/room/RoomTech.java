@@ -42,7 +42,14 @@ import java.util.function.Function;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RoomTech {
     public static final ResourceKey<Level> LEVEL = ResourceKey.create(Registries.DIMENSION, XenoWarriors.id("room"));
+    /** Room Technology I's Room: R blocks out each way, DOWN below and UP above you (the Aurora Security System's too). */
     public static final int R = 20, DOWN = 6, UP = 16, SPACING = 512;
+    /** Each tier's Room (I, II, III): half-width, depth below and height above where you stand - a bigger fighting area. */
+    public static final int[][] SIZES = {{R, DOWN, UP}, {32, 8, 22}, {48, 10, 28}};
+    /** Each tier's Karma cost in survival (a bigger Room pulls in more). */
+    public static final float[] TIER_KARMA = {40F, 55F, 70F};
+
+    public static int[] size(int tier) { return SIZES[Math.max(1, Math.min(SIZES.length, tier)) - 1]; }
     private static final DustParticleOptions SHIMMER = new DustParticleOptions(new Vector3f(0.45F, 0.8F, 1F), 1.4F);
 
     private static final class Room {
@@ -60,6 +67,8 @@ public final class RoomTech {
         final Map<UUID, Vec3> guests = new HashMap<>();
         /** A duel moved here by the security system: the other duelist (the Room closes when the duel's over). */
         UUID duelFoe;
+        /** How big this Room is: half-width, depth below, height above (from the tier that opened it). */
+        int r = R, down = DOWN, up = UP;
     }
 
     private static final Map<Integer, Room> ROOMS = new HashMap<>();
@@ -80,7 +89,11 @@ public final class RoomTech {
     public static boolean open(ServerPlayer p) { return BY_PLAYER.containsKey(p.getUUID()); }
 
     /** Opens a Room (or leaves the one you're in). Returns true if a new Room was opened. */
-    public static boolean use(ServerPlayer p) {
+    public static boolean use(ServerPlayer p) { return use(p, 1); }
+
+    /** Opens a Room of this tier's size (or leaves the one you're in). */
+    public static boolean use(ServerPlayer p, int tier) {
+        int[] sz = size(tier);
         if (com.xenowarriors.journey.Journey.inRun(p)) { p.displayClientMessage(Component.literal("Not on a Journey").withStyle(ChatFormatting.GRAY), true); return false; }
         Room existing = BY_PLAYER.get(p.getUUID());
         if (existing != null) { close(p.server, existing, "You left the Room."); return false; }
@@ -90,7 +103,7 @@ public final class RoomTech {
         }
         boolean survival = !p.isCreative() && !p.isSpectator();
         if (survival) {
-            AABB around = new AABB(p.blockPosition()).inflate(R, 8, R);
+            AABB around = new AABB(p.blockPosition()).inflate(sz[0], Math.max(8, sz[1]), sz[0]);
             boolean any = !p.serverLevel().getEntitiesOfClass(Mob.class, around, m -> m instanceof Enemy && m.isAlive() && !m.isPassenger()
                     && m.canChangeDimensions() && !m.getTags().contains("xw_blade_anchor")).isEmpty();
             if (!any) { p.displayClientMessage(Component.literal("No enemies nearby to pull into a Room").withStyle(ChatFormatting.GRAY), true); return false; }
@@ -98,10 +111,10 @@ public final class RoomTech {
             if (wait > 0 && wait <= COOLDOWN) {
                 p.displayClientMessage(Component.literal("Room Technology is recharging (" + (wait + 19) / 20 + "s)").withStyle(ChatFormatting.GRAY), true); return false;
             }
-            if (!com.xenowarriors.karma.Karma.trySpend(p, KARMA)) return false;
+            if (!com.xenowarriors.karma.Karma.trySpend(p, TIER_KARMA[Math.max(1, Math.min(3, tier)) - 1])) return false;
             p.getPersistentData().putLong(NEXT, p.serverLevel().getGameTime() + COOLDOWN);
         }
-        Room r = create(p, null, false);
+        Room r = create(p, null, false, sz);
         if (r == null) return false;
         p.displayClientMessage(Component.literal("ROOM • " + r.enemies.size() + " enem" + (r.enemies.size() == 1 ? "y" : "ies") + " pulled in").withStyle(ChatFormatting.AQUA), true);
         return true;
@@ -111,7 +124,10 @@ public final class RoomTech {
      * Opens a Room around the player, free: copies the area, pulls in the enemies around (and {@code foe}), and moves
      * the player in. With {@code security}, the party members and bot teammates nearby come too. Null if it couldn't.
      */
-    private static Room create(ServerPlayer p, LivingEntity foe, boolean security) {
+    private static Room create(ServerPlayer p, LivingEntity foe, boolean security) { return create(p, foe, security, SIZES[0]); }
+
+    private static Room create(ServerPlayer p, LivingEntity foe, boolean security, int[] sz) {
+        final int R = sz[0], DOWN = sz[1], UP = sz[2];
         ServerLevel room = p.server.getLevel(LEVEL);
         if (room == null) { p.sendSystemMessage(Component.literal("The Room dimension isn't loaded.").withStyle(ChatFormatting.RED)); return null; }
         ServerLevel src = p.serverLevel();
@@ -120,6 +136,7 @@ public final class RoomTech {
         Room r = new Room();
         r.player = p.getUUID(); r.from = src.dimension(); r.slot = slot;
         r.origin = p.blockPosition(); r.back = p.position(); r.yRot = p.getYRot(); r.xRot = p.getXRot();
+        r.r = R; r.down = DOWN; r.up = UP;
         r.center = new BlockPos(slot * SPACING + SPACING / 2, Math.max(room.getMinBuildHeight() + DOWN + 2, Math.min(room.getMaxBuildHeight() - UP - 2, r.origin.getY())), 0);
         copy(src, room, r);
         ROOMS.put(slot, r);
@@ -133,7 +150,7 @@ public final class RoomTech {
         if (security && foe instanceof ServerPlayer d && d != p && d.level() == src && !BY_PLAYER.containsKey(d.getUUID())) { mates.add(d); r.duelFoe = d.getUUID(); }   // (the other duelist comes too)
         if (security) for (ServerPlayer m : com.xenowarriors.party.Parties.members(p))
             if (m != p && m != foe && m.level() == src && m.distanceToSqr(p) < (R - 2) * (R - 2) && !BY_PLAYER.containsKey(m.getUUID())) { mates.add(m); side.add(m.getUUID()); }
-        List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, 8, R), m -> m.isAlive() && !m.isPassenger() && !m.getTags().contains("xw_blade_anchor")
+        List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, Math.max(8, DOWN), R), m -> m.isAlive() && !m.isPassenger() && !m.getTags().contains("xw_blade_anchor")
                 && (m instanceof Enemy || m == foe || security && m.getTarget() != null && (side.contains(m.getTarget().getUUID())
                     || m.getTarget() instanceof com.xenowarriors.bot.PartyBotEntity tb && side.contains(tb.ownerId()))));
         for (Mob m : mobs) {
@@ -148,7 +165,7 @@ public final class RoomTech {
         }
         if (security) {
             // the party comes too: its players (each sent back where they were) and everyone's bot teammates
-            for (com.xenowarriors.bot.PartyBotEntity b : src.getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, new AABB(r.origin).inflate(R, 8, R),
+            for (com.xenowarriors.bot.PartyBotEntity b : src.getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, new AABB(r.origin).inflate(R, Math.max(8, DOWN), R),
                     b -> b.isAlive() && !b.isPassenger() && side.contains(b.ownerId())))
                 move(b, room, toRoom(r, b.position()), b.getYRot());
             for (ServerPlayer m : mates) {
@@ -198,6 +215,7 @@ public final class RoomTech {
 
     /** The copy: every block in the area (contents of chests etc. stay behind), inside a shimmering glass shell. */
     private static void copy(ServerLevel src, ServerLevel room, Room r) {
+        final int R = r.r, DOWN = r.down, UP = r.up;
         BlockPos.MutableBlockPos a = new BlockPos.MutableBlockPos(), b = new BlockPos.MutableBlockPos();
         BlockState shell = Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState();
         // every chunk the copy (and what a placed block looks around at) touches, loaded first: a carved pumpkin checks
@@ -221,6 +239,7 @@ public final class RoomTech {
     }
 
     private static void clear(ServerLevel room, Room r) {
+        final int R = r.r, DOWN = r.down, UP = r.up;
         BlockPos.MutableBlockPos b = new BlockPos.MutableBlockPos();
         for (int dx = -R - 1; dx <= R + 1; dx++)
             for (int dz = -R - 1; dz <= R + 1; dz++)
@@ -256,7 +275,7 @@ public final class RoomTech {
         BY_PLAYER.remove(r.player);
         ServerLevel room = server.getLevel(LEVEL), back = server.getLevel(r.from);
         if (room == null || back == null) return;
-        AABB area = new AABB(r.center).inflate(R + 2, UP + DOWN + 4, R + 2);
+        AABB area = new AABB(r.center).inflate(r.r + 2, r.up + r.down + 4, r.r + 2);
         // survivors, drops and XP go back with you
         for (Entity e : room.getEntitiesOfClass(Entity.class, area, e -> !(e instanceof ServerPlayer)))
             if ((e instanceof ItemEntity && e.getPersistentData().getBoolean(KEEP)) || e instanceof ExperienceOrb || (e instanceof LivingEntity le && le.isAlive()))
@@ -296,7 +315,7 @@ public final class RoomTech {
                 double a = (now * 0.07) % (Math.PI * 2);
                 for (int i = 0; i < 4; i++) {
                     double t = a + i * Math.PI / 2;
-                    room.sendParticles(SHIMMER, r.center.getX() + Math.cos(t) * (R + 0.5), r.center.getY() + 1 + (now % 40) / 4.0, r.center.getZ() + Math.sin(t) * (R + 0.5), 1, 0, 0, 0, 0);
+                    room.sendParticles(SHIMMER, r.center.getX() + Math.cos(t) * (r.r + 0.5), r.center.getY() + 1 + (now % 40) / 4.0, r.center.getZ() + Math.sin(t) * (r.r + 0.5), 1, 0, 0, 0, 0);
                 }
             }
             if (now % 10 != 0) continue;
@@ -347,6 +366,35 @@ public final class RoomTech {
     }
 
     /** Logging out inside your Room closes it first: you (and what's left in it) go back where you opened it, and that's what's saved. */
+    /**
+     * Chests (and every other storage block: barrels, shulker boxes, furnaces, hoppers, other mods' storage) don't open
+     * in a Room - they're only empty copies, and an ender chest would reach your real one. Chest minecarts / boats too.
+     */
+    @SubscribeEvent
+    public static void onOpenBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+        if (!is(event.getLevel())) return;
+        var level = event.getLevel();
+        var be = level.getBlockEntity(event.getPos());
+        boolean storage = be instanceof net.minecraft.world.Container || level.getBlockState(event.getPos()).getBlock() instanceof net.minecraft.world.level.block.EnderChestBlock
+                || be != null && be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER).isPresent();
+        if (!storage) return;
+        event.setUseBlock(net.minecraftforge.eventbus.api.Event.Result.DENY);
+        blocked++;
+        if (!level.isClientSide) event.getEntity().displayClientMessage(Component.literal("Storage can't be opened in a Room - it's only a copy").withStyle(ChatFormatting.GRAY), true);
+    }
+
+    @SubscribeEvent
+    public static void onOpenEntity(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
+        if (!is(event.getLevel()) || !(event.getTarget() instanceof net.minecraft.world.entity.vehicle.ContainerEntity)) return;
+        event.setCanceled(true);
+        event.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+        blocked++;
+        if (!event.getLevel().isClientSide) event.getEntity().displayClientMessage(Component.literal("Storage can't be opened in a Room - it's only a copy").withStyle(ChatFormatting.GRAY), true);
+    }
+
+    /** (Tests) storage opens refused in Rooms. */
+    public static int blocked;
+
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
