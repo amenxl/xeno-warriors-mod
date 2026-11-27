@@ -156,6 +156,8 @@ public final class BotGear {
     }
 
     private static final java.util.Map<PartyBotEntity, Integer> LAST_BUSY = new java.util.WeakHashMap<>();
+    /** (Tests) counts as just having been busy: it keeps its weapon out for another 15 seconds. */
+    public static void busyNow(PartyBotEntity b) { LAST_BUSY.put(b, b.tickCount); }
 
     /**
      * Once a second, from the bot's tick: out of a fight for a while (and not mining), it puts its weapon or tool away

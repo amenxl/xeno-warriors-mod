@@ -46,6 +46,7 @@ public final class EfBotBodies {
                 walkMotion(patch, a);                                            // (Epic Fight never works out a remote player's walking itself: it's told)
                 patch.tick(new net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent(a));
                 walkMotion(patch, a);                                            // (and again after: its tick put a remote player back to idle)
+                playMotion(patch);                                               // (and its animator plays it: it had already picked idle inside that tick)
                 PartyBotEntity b = a.bot();
                 boolean swinging = b.swinging;
                 // a new swing: it started swinging, or its swing started over (a bot attacking non-stop never stops "swinging")
@@ -86,6 +87,64 @@ public final class EfBotBodies {
         if (patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.IDLE || patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.WALK
                 || patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.RUN) patch.currentCompositeMotion = want;
         if (want != yesman.epicfight.api.animation.LivingMotions.IDLE) walkSet++;
+    }
+
+    /** (Tests) walk / run animations started on bots' bodies by playMotion. */
+    public static int motionPlays;
+    private static java.lang.reflect.Method livingAnim, playAnim;
+    private static boolean motionApiMissing;
+
+    /**
+     * Epic Fight's tick decides a bot's body is standing still (nobody's game tells it the bot is walking) and its
+     * animator plays the idle - walkMotion's "walking" comes too late for that tick, and the next tick does the same: so
+     * the body stood with its legs still while it slid along, weapon in hand (the user's report). After the tick, when
+     * the body is only standing / walking / running (not mid-attack, falling, rolling...), this puts on the animation for
+     * the bot's real motion - the held weapon's own walk / run where it has one (a greatsword's two-handed walk).
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void playMotion(PlayerPatch<?> patch) {
+        if (motionApiMissing) return;
+        try {
+            if (Boolean.TRUE.equals(patch.getEntityState().getState(yesman.epicfight.api.animation.types.EntityState.INACTION))) return;
+            Object an = patch.getAnimator();
+            if (livingAnim == null || playAnim == null) {
+                for (var m : an.getClass().getMethods()) {
+                    if (m.getName().equals("getLivingAnimation") && m.getParameterCount() == 2) livingAnim = m;
+                    if (m.getName().equals("playAnimation") && m.getParameterCount() == 2 && m.getParameterTypes()[1] == float.class
+                            && !m.getParameterTypes()[0].isPrimitive()) playAnim = m;
+                }
+                if (livingAnim == null || playAnim == null) {
+                    motionApiMissing = true;
+                    com.xenowarriors.XenoWarriors.LOGGER.warn("[Xeno Warriors] Epic Fight's animator has no getLivingAnimation / playAnimation: bots' walk animations left to it");
+                    return;
+                }
+            }
+            var want = patch.currentLivingMotion;
+            if (want != yesman.epicfight.api.animation.LivingMotions.IDLE && want != yesman.epicfight.api.animation.LivingMotions.WALK
+                    && want != yesman.epicfight.api.animation.LivingMotions.RUN) return;
+            var pl = patch.getAnimator().getPlayerFor(null);
+            if (pl == null || pl.isEmpty() || pl.getRealAnimation() == null) return;
+            Object cur = pl.getRealAnimation().get();
+            Object idle = anim(an, yesman.epicfight.api.animation.LivingMotions.IDLE), walk = anim(an, yesman.epicfight.api.animation.LivingMotions.WALK),
+                    run = anim(an, yesman.epicfight.api.animation.LivingMotions.RUN);
+            if (cur != val(idle) && cur != val(walk) && cur != val(run)) return;          // (something else on: a landing, a hit - left alone)
+            Object target = want == yesman.epicfight.api.animation.LivingMotions.WALK ? walk : want == yesman.epicfight.api.animation.LivingMotions.RUN ? run : idle;
+            if (target == null || val(target) == cur) return;
+            playAnim.invoke(an, target, 0F);
+            if (want != yesman.epicfight.api.animation.LivingMotions.IDLE) motionPlays++;
+        } catch (Throwable t) {
+            motionApiMissing = true;
+            lastError = String.valueOf(t);
+            com.xenowarriors.XenoWarriors.LOGGER.warn("[Xeno Warriors] couldn't play a bot's walk animation on its Epic Fight body - left to Epic Fight", t);
+        }
+    }
+
+    private static Object anim(Object animator, Object motion) throws Exception { return livingAnim.invoke(animator, motion, null); }
+
+    /** The animation itself behind Epic Fight's handle to it. */
+    private static Object val(Object accessor) {
+        if (accessor == null) return null;
+        try { return accessor.getClass().getMethod("get").invoke(accessor); } catch (Exception e) { return accessor; }
     }
 
     /**

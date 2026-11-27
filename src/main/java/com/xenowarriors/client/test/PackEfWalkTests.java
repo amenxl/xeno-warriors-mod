@@ -44,7 +44,8 @@ final class PackEfWalkTests {
             var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(av, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
             if (patch == null) return "no patch";
             var pl = patch.getAnimator().getPlayerFor(null);
-            String base = pl == null || pl.isEmpty() || pl.getRealAnimation() == null ? "none" : String.valueOf(pl.getRealAnimation().get());
+            String base = pl == null || pl.isEmpty() || pl.getRealAnimation() == null ? "none" : String.valueOf(pl.getRealAnimation().get())
+                    + " @" + String.format(java.util.Locale.ROOT, "%.2f", pl.getElapsedTime());
             String comp = "";
             try {                                                                 // (the upper-body layer: by reflection, its API moves between versions)
                 Object an = patch.getAnimator();
@@ -91,6 +92,7 @@ final class PackEfWalkTests {
                     }
                     if (bot == null) return;
                     bot.setNoAi(false);
+                    com.xenowarriors.bot.BotGear.busyNow(bot);                        // (weapon stays out: not 15 s out of a fight)
                     bot.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(it));
                     bot.setTarget(null);
                     bot.moveTo(PackTests.HOME[0] - 7, PackTests.HOME[1], PackTests.HOME[2] + 6, -90F, 0F);
@@ -104,7 +106,7 @@ final class PackEfWalkTests {
                 for (int k = 0; k < 4; k++) {
                     int kk = k;
                     l.add(new Step(kk == 1 ? "efwalk_" + n + (sprint ? "_run" : "_walk") : null, () -> {
-                        if (sprint) PackTests.server(p -> { if (bot != null) bot.setSprinting(true); });
+                        PackTests.server(p -> { if (bot != null) { com.xenowarriors.bot.BotGear.busyNow(bot); if (sprint) bot.setSprinting(true); } });
                         var av = avatar(mc, t);
                         if (av == null) { seen.add("no avatar"); return; }
                         var b = ((com.xenowarriors.client.bot.BotAvatar) av).bot();
@@ -124,6 +126,7 @@ final class PackEfWalkTests {
             PackTests.check("efwalk: bots walk on Epic Fight's body with every weapon (legs move)", noWalk.isEmpty(), noWalk.toString());
             PackTests.check("efwalk: bots run on Epic Fight's body with every weapon", noRun.isEmpty(), noRun.toString());
             PackTests.check("efwalk: no errors on the bots' Epic Fight bodies", EfBotBodies.lastError == null, String.valueOf(EfBotBodies.lastError));
+            PackTests.log("efwalk: walk / run animations put on " + EfBotBodies.motionPlays);
             mc.options.hideGui = false;
             PackTests.server(p -> { PackTests.clear(p); bot = null; });
         }, 5));
