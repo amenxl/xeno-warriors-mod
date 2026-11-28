@@ -205,14 +205,22 @@ public class StoryScreen extends Screen {
         cards(g, mx, my);
         if (!st.getBoolean("active")) {
             int y = bannerAt(g, "finale", 180, 34, "Season 1: the Xeno Warriors' story", "Rhalix and Mikiko - and you", 0xE8B030) + 8;
-            for (String s : new String[]{"Play the Season 1 story with your own character.",
-                    "Every character gets locked except yours. Meet people to call them as bots;",
-                    "grow your bond with them (40, or 75 for Rhalix, Mikiko, Senju and Kyle) - or finish",
-                    "their storyline - to play them. Rhalix's or Mikiko's story first, then the other,",
-                    "then the Sky Rebellion and the Government, then the finale. Parties of up to 4:",
-                    "the party leader's story is the one you all play."}) {
-                g.drawString(font, s, 180, y, 0xFFD8D8E0, false); y += 11;
-            }
+            // wrapped to the room there is, and a little smaller if it has to be - it ran off the right side and under
+            // the Start button on smaller windows
+            Component about = Component.literal("Play the Season 1 story with your own character. Every character gets locked except yours. "
+                    + "Meet people to call them as bots; grow your bond with them (40, or 75 for Rhalix, Mikiko, Senju and Kyle) - or finish "
+                    + "their storyline - to play them. Rhalix's or Mikiko's story first, then the other, then the Sky Rebellion and the "
+                    + "Government, then the finale. Parties of up to 4: the party leader's story is the one you all play.");
+            int room = Math.max(80, width - 180 - 12), stop = height - 36;
+            float k = 1F;
+            var lines = font.split(about, room);
+            while (k > 0.55F && y + lines.size() * 11 * k > stop) { k -= 0.05F; lines = font.split(about, (int) (room / k)); }
+            g.pose().pushPose();
+            g.pose().translate(180, y, 0);
+            g.pose().scale(k, k, 1F);
+            int ly = 0;
+            for (var line : lines) { g.drawString(font, line, 0, ly, 0xFFD8D8E0, false); ly += 11; }
+            g.pose().popPose();
             super.render(g, mx, my, pt);
             return;
         }

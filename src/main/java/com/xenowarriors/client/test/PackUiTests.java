@@ -77,6 +77,7 @@ final class PackUiTests {
                 if (ox > 2 && oy > 2) issues.add("text over text '" + cut(a.s()) + "' " + box(a) + " & '" + cut(b.s()) + "' " + box(b));
             }
             for (UiTextRecorder.Text t : texts) for (AbstractWidget a : ws) {
+                if (a instanceof net.minecraft.client.gui.components.EditBox) continue;   // (what's typed in a text box is its own)
                 String label = a.getMessage().getString();
                 if (!label.isEmpty() && (label.contains(t.s()) || t.s().contains(label))) continue;   // (its own label)
                 float ox = Math.min(t.x1(), a.getX() + a.getWidth() - 1) - Math.max(t.x0(), a.getX() + 1), oy = Math.min(t.y1(), a.getY() + a.getHeight() - 1) - Math.max(t.y0(), a.getY() + 1);

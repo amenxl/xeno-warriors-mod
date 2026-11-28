@@ -115,9 +115,17 @@ public class KaGuideScreen extends Screen {
             int bx = mx + 12 + bw + 6 > width ? Math.max(4, mx - 16 - bw) : mx + 12;
             int by = Math.max(6, Math.min(my - 12, height - bh - 6));
             int fx = Math.round(bx / sc), fy = Math.round(by / sc);
+            // our own solid panel (not the shared tooltip: a tooltip mod in the pack wrapped its lines again, raggedly,
+            // and let the page show through it)
             g.pose().pushPose();
+            g.pose().translate(0, 0, 400);
             if (sc < 1F) g.pose().scale(sc, sc, 1F);
-            g.renderTooltip(font, lines, (sw, sh, x, y, w, h) -> new org.joml.Vector2i(fx, fy), fx, fy);
+            g.fill(fx - 4, fy - 4, fx + tw + 4, fy + th, 0xF8100A18);
+            int edge = 0xFF5A3A8A;
+            g.fill(fx - 4, fy - 4, fx + tw + 4, fy - 3, edge); g.fill(fx - 4, fy + th - 1, fx + tw + 4, fy + th, edge);
+            g.fill(fx - 4, fy - 4, fx - 3, fy + th, edge); g.fill(fx + tw + 3, fy - 4, fx + tw + 4, fy + th, edge);
+            int ly = fy;
+            for (var ln : lines) { g.drawString(font, ln, fx, ly, 0xFFFFFFFF, true); ly += 10; }
             g.pose().popPose();
         }
     }
