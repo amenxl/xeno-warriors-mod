@@ -165,44 +165,46 @@ final class PackUiTests {
         for (CharacterSelectScreen.Group g : CharacterSelectScreen.Group.values())
             client(mc, l, "select_" + g.name().toLowerCase(), () -> { CharacterSelectScreen.groupForTest(g); return new CharacterSelectScreen(); });
 
-        client(mc, l, "mainmenu", com.xenowarriors.client.menu.MainMenuScreen::new);
-        client(mc, l, "stats", com.xenowarriors.client.PlayerStatsScreen::new);
-        client(mc, l, "custom", () -> new com.xenowarriors.client.menu.CharacterCustomScreen(null));
-        client(mc, l, "skills", () -> new com.xenowarriors.client.SkillLoadoutScreen(null));
-        client(mc, l, "kaguide", () -> new com.xenowarriors.client.KaGuideScreen(null));
-        client(mc, l, "guide", () -> new com.xenowarriors.client.menu.GuideScreen(null));
-        client(mc, l, "party", com.xenowarriors.client.bot.PartyScreen::new);
-        client(mc, l, "partysetup", () -> new com.xenowarriors.client.party.PartySetupScreen());
-        client(mc, l, "factions", () -> new com.xenowarriors.client.menu.FactionsScreen(null));
-        client(mc, l, "pets", () -> new com.xenowarriors.client.menu.PetsScreen(null));
-        client(mc, l, "phone", com.xenowarriors.client.PhoneScreen::new);
-        client(mc, l, "youslots", com.xenowarriors.client.you.YouSlotsScreen::new);
-        client(mc, l, "youcreator", () -> new com.xenowarriors.client.you.YouCreatorScreen(0));
-        client(mc, l, "youlook", () -> new com.xenowarriors.client.you.YouLookScreen(0, new com.xenowarriors.you.YouSlot(), null));
-        client(mc, l, "youfeature", () -> new com.xenowarriors.client.you.YouFeatureScreen(0, new com.xenowarriors.you.YouSlot(), null));
-        client(mc, l, "youcolour", () -> new com.xenowarriors.client.you.YouColourScreen("Tester", 0xFF8800, 0, null, c -> {}));
-        client(mc, l, "youskin", () -> new com.xenowarriors.client.you.YouSkinScreen("Tester", "", null, s -> {}));
-        client(mc, l, "wheel_heku", () -> new com.xenowarriors.client.forms.FormWheelScreen(com.xenowarriors.forms.Form.Style.HEKU, true));
-        client(mc, l, "wheel_wire", () -> new com.xenowarriors.client.forms.FormWheelScreen(com.xenowarriors.forms.Form.Style.WIRE, true));
-        client(mc, l, "togglewheel", () -> new com.xenowarriors.client.ToggleWheelScreen(true));
-        client(mc, l, "govshop", () -> new com.xenowarriors.client.screen.GovShopScreen(12345, 10));
-        client(mc, l, "dealer", () -> new com.xenowarriors.client.vehicle.DealerScreen(20, 50000));
-        client(mc, l, "playeraction", () -> new com.xenowarriors.client.party.PlayerActionScreen(UUID.randomUUID(), "Somebody"));
-        client(mc, l, "journeylobby", com.xenowarriors.client.journey.JourneyLobbyScreen::new);
-        client(mc, l, "journeyteam", com.xenowarriors.client.journey.JourneyTeamScreen::new);
-        client(mc, l, "journeymenu", () -> new com.xenowarriors.client.journey.JourneyMenuScreen(false));
-        client(mc, l, "journeyresults", () -> new com.xenowarriors.client.journey.JourneyMenuScreen(true));
-        client(mc, l, "story", () -> new com.xenowarriors.client.story.StoryScreen(null));
-        client(mc, l, "storydialogue", () -> new com.xenowarriors.client.story.StoryDialogueScreen(dialogue()));
-        client(mc, l, "boostbag", () -> { int[] c = new int[64]; for (int i = 0; i < c.length; i += 3) c[i] = 1 + i % 7; return new com.xenowarriors.client.BoostBagScreen(c); });
-        client(mc, l, "rps", () -> new com.xenowarriors.client.party.RpsScreen(new com.xenowarriors.network.RpsPacket(bot == null ? -1 : bot.getId(), "Garry", 1, -1, -1, 0)));
-        client(mc, l, "wingpet", () -> new com.xenowarriors.client.wing.WingPetScreen(new com.xenowarriors.network.OpenWingPetPacket(UUID.randomUUID(), -1, "Skye", 0, 14F, 20F, "wing")));
-        client(mc, l, "scent", () -> new com.xenowarriors.client.kaeru.ScentScreen(List.of(new com.xenowarriors.network.ScentPacket.Entry(1, "Zombie", 0, 12),
+        Map<String, Supplier<Screen>> C = new LinkedHashMap<>();
+        C.put("mainmenu", com.xenowarriors.client.menu.MainMenuScreen::new);
+        C.put("stats", com.xenowarriors.client.PlayerStatsScreen::new);
+        C.put("custom", () -> new com.xenowarriors.client.menu.CharacterCustomScreen(null));
+        C.put("skills", () -> new com.xenowarriors.client.SkillLoadoutScreen(null));
+        C.put("kaguide", () -> new com.xenowarriors.client.KaGuideScreen(null));
+        C.put("guide", () -> new com.xenowarriors.client.menu.GuideScreen(null));
+        C.put("party", com.xenowarriors.client.bot.PartyScreen::new);
+        C.put("partysetup", () -> new com.xenowarriors.client.party.PartySetupScreen());
+        C.put("factions", () -> new com.xenowarriors.client.menu.FactionsScreen(null));
+        C.put("pets", () -> new com.xenowarriors.client.menu.PetsScreen(null));
+        C.put("phone", com.xenowarriors.client.PhoneScreen::new);
+        C.put("youslots", com.xenowarriors.client.you.YouSlotsScreen::new);
+        C.put("youcreator", () -> new com.xenowarriors.client.you.YouCreatorScreen(0));
+        C.put("youlook", () -> new com.xenowarriors.client.you.YouLookScreen(0, new com.xenowarriors.you.YouSlot(), null));
+        C.put("youfeature", () -> new com.xenowarriors.client.you.YouFeatureScreen(0, new com.xenowarriors.you.YouSlot(), null));
+        C.put("youcolour", () -> new com.xenowarriors.client.you.YouColourScreen("Tester", 0xFF8800, 0, null, c -> {}));
+        C.put("youskin", () -> new com.xenowarriors.client.you.YouSkinScreen("Tester", "", null, s -> {}));
+        C.put("wheel_heku", () -> new com.xenowarriors.client.forms.FormWheelScreen(com.xenowarriors.forms.Form.Style.HEKU, true));
+        C.put("wheel_wire", () -> new com.xenowarriors.client.forms.FormWheelScreen(com.xenowarriors.forms.Form.Style.WIRE, true));
+        C.put("togglewheel", () -> new com.xenowarriors.client.ToggleWheelScreen(true));
+        C.put("govshop", () -> new com.xenowarriors.client.screen.GovShopScreen(12345, 10));
+        C.put("dealer", () -> new com.xenowarriors.client.vehicle.DealerScreen(20, 50000));
+        C.put("playeraction", () -> new com.xenowarriors.client.party.PlayerActionScreen(UUID.randomUUID(), "Somebody"));
+        C.put("journeylobby", com.xenowarriors.client.journey.JourneyLobbyScreen::new);
+        C.put("journeyteam", com.xenowarriors.client.journey.JourneyTeamScreen::new);
+        C.put("journeymenu", () -> new com.xenowarriors.client.journey.JourneyMenuScreen(false));
+        C.put("journeyresults", () -> new com.xenowarriors.client.journey.JourneyMenuScreen(true));
+        C.put("story", () -> new com.xenowarriors.client.story.StoryScreen(null));
+        C.put("storydialogue", () -> new com.xenowarriors.client.story.StoryDialogueScreen(dialogue()));
+        C.put("boostbag", () -> { int[] c = new int[64]; for (int i = 0; i < c.length; i += 3) c[i] = 1 + i % 7; return new com.xenowarriors.client.BoostBagScreen(c); });
+        C.put("rps", () -> new com.xenowarriors.client.party.RpsScreen(new com.xenowarriors.network.RpsPacket(bot == null ? -1 : bot.getId(), "Garry", 1, -1, -1, 0)));
+        C.put("wingpet", () -> new com.xenowarriors.client.wing.WingPetScreen(new com.xenowarriors.network.OpenWingPetPacket(UUID.randomUUID(), -1, "Skye", 0, 14F, 20F, "wing")));
+        C.put("scent", () -> new com.xenowarriors.client.kaeru.ScentScreen(List.of(new com.xenowarriors.network.ScentPacket.Entry(1, "Zombie", 0, 12),
                 new com.xenowarriors.network.ScentPacket.Entry(2, "Sky Patrol Soldier", 1, 40), new com.xenowarriors.network.ScentPacket.Entry(3, "Diamond Ore", 2, 7))));
-        client(mc, l, "foxname", () -> new com.xenowarriors.client.fox.FoxNameScreen(UUID.randomUUID(), "Foxy", true));
-        client(mc, l, "inventory", () -> new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
-        client(mc, l, "pause", () -> new net.minecraft.client.gui.screens.PauseScreen(true));
+        C.put("foxname", () -> new com.xenowarriors.client.fox.FoxNameScreen(UUID.randomUUID(), "Foxy", true));
+        C.put("inventory", () -> new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
+        C.put("pause", () -> new net.minecraft.client.gui.screens.PauseScreen(true));
 
+        for (var e : C.entrySet()) client(mc, l, e.getKey(), e.getValue());
         server(mc, l, "botmenu", p -> { if (bot != null) PartyBots.interact(bot, p); });
         server(mc, l, "botbag", p -> { if (bot != null) PartyBots.openBag(p, bot); });
         server(mc, l, "botpick", PartyBots::openPick);
@@ -234,6 +236,20 @@ final class PackUiTests {
             for (String i : issues) record("hud", i);
             log("hud " + w + "x" + h + ": " + texts.size() + " texts, " + (issues.isEmpty() ? "ok" : issues.size() + " problems: " + issues));
         }, 3));
+
+        // the same screens at GUI scale 2 (bigger windows / a smaller GUI): pictures only, the sizes are checked above
+        l.add(new Step(null, () -> { close(mc); mc.options.guiScale().set(2); mc.resizeDisplay(); }, 10));
+        for (var e : C.entrySet()) {
+            String name = e.getKey(); Supplier<Screen> make = e.getValue();
+            if (name.equals("inventory") || name.equals("pause")) continue;
+            l.add(new Step(null, () -> { close(mc); try { mc.setScreen(make.get()); } catch (Throwable t) { record(name, "CRASH opening (scale 2): " + t); } }, 10));
+            l.add(new Step("ui2_" + name, () -> {}, 2));
+        }
+        for (CharacterSelectScreen.Group g : CharacterSelectScreen.Group.values()) {
+            l.add(new Step(null, () -> { close(mc); CharacterSelectScreen.groupForTest(g); mc.setScreen(new CharacterSelectScreen()); }, 10));
+            l.add(new Step("ui2_select_" + g.name().toLowerCase(), () -> {}, 2));
+        }
+        l.add(new Step(null, () -> { close(mc); mc.options.guiScale().set(0); mc.resizeDisplay(); }, 10));
 
         l.add(new Step("ui_done", () -> {
             close(mc);

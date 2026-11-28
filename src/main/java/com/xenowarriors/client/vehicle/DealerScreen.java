@@ -38,14 +38,45 @@ public class DealerScreen extends Screen {
         return l;
     }
 
-    private int top() { return Math.max(42, height / 2 - (shown().size() * ROW) / 2 + 6); }
+    /** The first row shown (the list scrolls when the window is too short for all of it). */
+    private int scroll;
+    /** How many rows fit under the header. */
+    private int fits() { return Math.max(1, (height - 42 - 6) / ROW); }
+    private List<VehicleKind> visible() {
+        List<VehicleKind> all = shown();
+        scroll = Math.max(0, Math.min(scroll, all.size() - fits()));
+        return all.subList(scroll, Math.min(all.size(), scroll + fits()));
+    }
+
+    private int top() { return Math.max(42, height / 2 - (visible().size() * ROW) / 2 + 6); }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double delta) {
+        int before = scroll;
+        scroll -= (int) Math.signum(delta);
+        visible();
+        if (scroll != before) rebuildWidgets();
+        return true;
+    }
+
+    /** Text squeezed (a little smaller) to fit the room it has - it ran under the Colour button. */
+    private void fit(GuiGraphics g, String s, int x, int y, int room, int color) {
+        int w = font.width(s);
+        if (w <= room) { g.drawString(font, s, x, y, color, false); return; }
+        float k = Math.max(0.6F, room / (float) w);
+        g.pose().pushPose();
+        g.pose().translate(x, y + (1 - k) * 4, 0);
+        g.pose().scale(k, k, 1);
+        g.drawString(font, k * w > room ? font.plainSubstrByWidth(s, (int) (room / k) - 6) + "..." : s, 0, 0, color, false);
+        g.pose().popPose();
+    }
 
     @Override
     protected void init() {
         int x = width / 2 - 150, y = top();
         addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(mk2 ? "< Standard models" : "Mk II models >"), b -> { mk2 = !mk2; rebuildWidgets(); })
                 .bounds(width / 2 + 40, y - 36, 110, 16).build());
-        List<VehicleKind> list = shown();
+        List<VehicleKind> list = visible();
         for (int i = 0; i < list.size(); i++) {
             VehicleKind k = list.get(i);
             final int idx = k.ordinal();
@@ -66,20 +97,23 @@ public class DealerScreen extends Screen {
         g.drawString(font, "Aurora Motors", x, y - 34, 0xFFFFFF, false);
         g.drawString(font, "You have " + emeralds + " emeralds" + (mk2 ? "" : ", " + com.xenowarriors.economy.Money.fmt(money) + " Money"), x, y - 22, 0x55FF55, false);
         if (mk2) g.drawString(font, "Faster and tougher - the car, bike and truck fly too", x, y - 11, 0x7FE8FF, false);
-        List<VehicleKind> list = shown();
+        List<VehicleKind> list = visible();
+        if (scroll > 0) g.drawString(font, "\u25B2 scroll", x + 300 - font.width("\u25B2 scroll"), y - 11, 0x8899AA, false);
+        if (scroll + list.size() < shown().size()) g.drawString(font, "\u25BC scroll for more", x + 300 - font.width("\u25BC scroll for more"), Math.min(height - 10, y + list.size() * ROW), 0x8899AA, false);
         for (int i = 0; i < list.size(); i++) {
             VehicleKind k = list.get(i);
             int ry = y + i * ROW;
+            int room = (k.variants.length > 1 ? 168 : 232) - 14;                // (the text stops short of the buttons)
             g.fill(x, ry, x + 300, ry + 42, 0xB0101418);
             g.fill(x, ry, x + 3, ry + 42, k.upgraded() ? 0xFF3FE0FF : 0xFF33AACC);
             g.drawString(font, k.title, x + 10, ry + 8, k.upgraded() ? 0x9FF0FF : 0xFFFFFF, false);
             String v = k.variant(colour[k.ordinal()]);
             int in = k.insideSeats(), extra = k.seats - in;
             String seatText = k.ship() ? k.seats + " aboard, sails on water" : in + " seats" + (extra > 0 ? " +" + extra + (k.heli() ? " hanging on" : " on top") : "");
-            g.drawString(font, seatText + (k.variants.length > 1 ? " - " + Character.toUpperCase(v.charAt(0)) + v.substring(1) : ""), x + 10, ry + 20, 0xAAAAAA, false);
-            if (k.moneyPrice() > 0) { g.drawString(font, com.xenowarriors.economy.Money.fmt(k.moneyPrice()) + " Money", x + 10, ry + 31, affords(k) ? 0x55FF55 : 0xFF5555, false); continue; }
-            g.drawString(font, k.price + " emeralds" + (k.upgraded() ? "   " + Math.round(k.maxSpeed * 72) + " km/h" + (k.hovers() ? ", flies" : "") : ""), x + 10, ry + 31,
-                    emeralds >= k.price ? 0x55FF55 : 0xFF5555, false);
+            fit(g, seatText + (k.variants.length > 1 ? " - " + Character.toUpperCase(v.charAt(0)) + v.substring(1) : ""), x + 10, ry + 20, room, 0xAAAAAA);
+            if (k.moneyPrice() > 0) { fit(g, com.xenowarriors.economy.Money.fmt(k.moneyPrice()) + " Money", x + 10, ry + 31, room, affords(k) ? 0x55FF55 : 0xFF5555); continue; }
+            fit(g, k.price + " emeralds" + (k.upgraded() ? "   " + Math.round(k.maxSpeed * 72) + " km/h" + (k.hovers() ? ", flies" : "") : ""), x + 10, ry + 31, room,
+                    emeralds >= k.price ? 0xFF55FF55 : 0xFFFF5555);
         }
         super.render(g, mx, my, pt);
     }

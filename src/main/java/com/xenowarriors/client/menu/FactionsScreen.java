@@ -91,7 +91,7 @@ public class FactionsScreen extends Screen {
 
     private static String moves(Faction f) {
         return switch (f) {
-            case GOV -> "Down: fighting Gov agents, getting caught.  Up: donating / returning gear at a terminal, defending agents, bounties, fighting the Rebellion.";
+            case GOV -> "Down: fighting Gov agents, getting caught.  Up: terminal donations, defending agents, bounties.";
             case SR -> "Down: fighting SR members.  Up: fighting Gov agents.";
             case SKY -> "Down: hurting Skylanders.  Up: stopping Sky Hater sieges and raiders, fighting the Rebellion.";
             case TOWN -> "Down: hurting townsfolk or villagers.  Up: bounties, defending raids, trading, clearing corruption.";
@@ -154,10 +154,13 @@ public class FactionsScreen extends Screen {
             g.fill(Math.min(mid, at), by, Math.max(mid, at), by + 5, 0xFF000000 | t.color);
             g.fill(mid, by - 2, mid + 1, by + 7, 0xFFFFFFFF);
             g.fill(at - 1, by - 3, at + 2, by + 8, 0xFFFFFFFF);
-            sc(g, effect(f, t), 84, y + 26, 0.7F, 0xE0E0E8);
-            sc(g, moves(f), 84, y + 35, 0.6F, 0x8A8A9A);
-            boolean hov = vx >= 8 && vx < VW - 8 && vy >= y && vy < y + 44;
             String more = "How to raise / lower \u25b8";
+            // (each fits its room: the Government's line ran past the panel, and a long effect would run into the link)
+            String ef = effect(f, t), mv = moves(f);
+            float roomEf = VW - 14 - font.width(more) * 0.6F - 6 - 84, roomMv = VW - 14 - 84;
+            sc(g, ef, 84, y + 26, Math.min(0.7F, roomEf / Math.max(1, font.width(ef))), 0xE0E0E8);
+            sc(g, mv, 84, y + 35, Math.min(0.6F, roomMv / Math.max(1, font.width(mv))), 0x8A8A9A);
+            boolean hov = vx >= 8 && vx < VW - 8 && vy >= y && vy < y + 44;
             sc(g, more, VW - 14 - font.width(more) * 0.6F, y + 26, 0.6F, hov ? 0xFFFFFF : 0x000000 | light(f.color));
             if (hov) box(g, 8, y, VW - 8, y + 44, 0xFF000000 | f.color);
             g.pose().popPose();
