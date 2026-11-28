@@ -92,7 +92,7 @@ public class YouSlotsScreen extends JourneyScreen {
                 button(g, x + 8, y + ch - 30, x + cw - 8, y + ch - 8, "+ CREATE", 0x60D080, true, () -> minecraft.setScreen(new YouCreatorScreen(i)));
             }
         }
-        button(g, VW - 70, 8, VW - 10, 22, "BACK",      // (top right: at the bottom it sat on the last slot's card) 0x9AA8B8, true, () -> minecraft.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()));
+        button(g, VW - 70, 8, VW - 10, 22, "BACK", /* (top right: at the bottom it sat on the last slot's card) */ 0x9AA8B8, true, () -> minecraft.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()));
     }
 
     static String shortSkin(String skin) {
