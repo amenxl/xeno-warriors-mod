@@ -26,6 +26,11 @@ public class JourneyMenuScreen extends JourneyScreen {
         int phase = JourneyClient.phase(), diff = st.getInt("diff"), cur = st.getInt("cur"), jc = st.getInt("jc");
         boolean shop = phase == 1;
         int[] prices = st.getIntArray("prices");
+        if (prices.length <= Math.max(Math.max(JourneyRules.S_REVIVE, JourneyRules.S_HEAL), Math.max(Math.max(JourneyRules.S_FULL, JourneyRules.S_PARTY), JourneyRules.S_POWER))
+                || diff < 0 || diff >= JourneyRules.DIFF.length) {
+            sc(g, "Waiting for the Journey...", 10, 10, 1F, 0x8090A0);    // (opened before the Journey's details arrived: it crashed here)
+            return;
+        }
         // header, like the path's sign: difficulty and step
         sc(g, JourneyRules.DIFF[diff], 10, 6, 2.4F, JourneyRules.DIFF_COLOR[diff]);
         sc(g, "Stage " + (st.getInt("stage") + 1) + "   " + String.format("%02d/%02d", cur, st.getInt("rows")), 12 + font.width(JourneyRules.DIFF[diff]) * 2.4F, 14, 1.2F, 0xFFFFFF);
