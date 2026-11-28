@@ -147,6 +147,7 @@ public final class PackTests {
         if (focus.startsWith("packnpcs")) { PackNpcTests.build(mc, l); return; }      // (people on Epic Fight's body)
         if (focus.startsWith("packbotrace")) { PackGloveTests.botRace(mc, l); return; }      // (new bots' race auto-pick)
         if (focus.startsWith("packglove")) { PackGloveTests.build(mc, l); return; }      // (Mikiko's bare hands as fast as the glove)
+        if (focus.startsWith("packui")) { PackUiTests.build(mc, l); return; }      // (every screen: overlaps, off-screen, labels; Kaeru on the Orenji tab)
         if (focus.startsWith("packroom")) { PackRoomTests.build(mc, l); return; }      // (Room Technology tiers, storage locked in a Room)
         if (focus.startsWith("packefwalkgif")) { PackEfWalkGif.build(mc, l); return; }      // (frames: a bot walking with a weapon, for a GIF)
         if (focus.startsWith("packefwalk")) { PackEfWalkTests.build(mc, l); return; }      // (bots walking / running with weapons on Epic Fight's body)

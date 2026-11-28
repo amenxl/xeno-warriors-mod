@@ -77,7 +77,8 @@
     "LevelRendererRainMixin",
     "MouseHandlerGunMixin",
     "compat.EpicFightGunAttackMixin",
-    "compat.EpicFightGunGuardMixin"
+    "compat.EpicFightGunGuardMixin",
+    "GuiTextRecordMixin"
   ],
   "injectors": {
     "defaultRequire": 1

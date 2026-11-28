@@ -43,6 +43,12 @@ public class CharacterSelectScreen extends Screen {
             this.logo = logo == null ? null : com.xenowarriors.XenoWarriors.id("textures/gui/" + logo + ".png");
         }
 
+        /** Is this character on this team? (Some are on two: Kaeru is a Freedom Fighter and in the Orenji Clan.) */
+        public boolean has(CharacterType t) {
+            for (CharacterType m : members) if (m == t) return true;
+            return false;
+        }
+
         public static Group of(CharacterType t) {
             for (Group g : values()) for (CharacterType m : g.members) if (m == t) return g;
             return FREEDOM;
@@ -64,7 +70,7 @@ public class CharacterSelectScreen extends Screen {
         super(Component.translatable("screen.xenowarriors.select.title"));
         this.canClose = ClientCharacterData.getLocal() != CharacterType.NONE;
         if (!opened) { opened = true; if (canClose) group = Group.of(ClientCharacterData.getLocal()); }
-        if (canClose && Group.of(ClientCharacterData.getLocal()) == group) focus = ClientCharacterData.getLocal();
+        if (canClose && group.has(ClientCharacterData.getLocal())) focus = ClientCharacterData.getLocal();
         if (testFocus != null) { group = Group.of(testFocus); focus = testFocus; }
         ModNetwork.sendToServer(new com.xenowarriors.network.CharLevelsPacket(new int[0]));      // ask for our level with everyone
         ModNetwork.sendToServer(new com.xenowarriors.network.TakenCharsPacket(new String[0], true));   // and who's playing who
@@ -75,6 +81,14 @@ public class CharacterSelectScreen extends Screen {
     /** UI test: look at this character. */
     public static void focusForTest(CharacterType t) { testFocus = t; }
     private static CharacterType testFocus;
+
+    /** UI test: show this team's tab (and nobody picked out). */
+    public static void groupForTest(Group g) { group = g; testFocus = null; }
+    /** UI test: who's shown big / can be picked right now. */
+    public CharacterType focusForTest() { return focus; }
+    public boolean selectActiveForTest() { return sel != null && sel.active; }
+    /** UI test: click a character's card on the current tab (as the mouse would). */
+    public void clickCardForTest(CharacterType t) { for (Card c : cards) if (c.type == t) { mouseClicked(c.x + c.w / 2.0, c.y + c.h / 2.0, 0); return; } }
 
     /** UI test: flip to the next team. */
     public static void nextPageForTest() { group = Group.values()[(group.ordinal() + 1) % Group.values().length]; }
@@ -112,7 +126,8 @@ public class CharacterSelectScreen extends Screen {
             cards.add(new Card((CharacterType) entries.get(i)[0], (String) entries.get(i)[1], x, y, cw, ch));
         }
         if (testFocus != null) focus = testFocus;
-        if (focus == null || Group.of(focus) != group) focus = group.members.length > 0 ? group.members[0] : null;
+        // (on this tab? - not "is this tab their first team": Kaeru on the Orenji Clan tab kept flipping back to Mikiko)
+        if (focus == null || !group.has(focus)) focus = group.members.length > 0 ? group.members[0] : null;
         sel = addRenderableWidget(Button.builder(Component.literal(selectLabel()), b -> { if (pickable(focus)) choose(focus); })
                 .bounds(width - 76, height - 30, 68, 22).build());
         sel.active = pickable(focus);
