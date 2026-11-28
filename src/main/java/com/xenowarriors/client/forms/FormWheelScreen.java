@@ -145,10 +145,16 @@ public class FormWheelScreen extends Screen {
             g.renderItem(st, -8, -8);
             g.pose().popPose();
             if (!open) g.fill(ix - 14, iy - 19, ix + 14, iy + 9, 0x90000000);
+            // the name fits its own slice (with 10 forms round the ring the longer ones ran into their neighbours)
             String label = f == Form.BLADE ? "Hekublade" : f.label;
-            g.drawCenteredString(font, label, ix, iy + 13, open ? 0xFFFFFF : 0x808080);
+            float room = (float) (2 * r * Math.sin(slice / 2)) - 6, lk = Math.min(1F, room / Math.max(1, font.width(label)));
+            g.pose().pushPose();
+            g.pose().translate(ix, iy + 13 + (1 - lk) * 4, 0);
+            g.pose().scale(lk, lk, 1F);
+            g.drawCenteredString(font, label, 0, 0, open ? 0xFFFFFF : 0x808080);
+            g.pose().popPose();
             if (f.gun() && gunCd > 0 && FormsClient.unlocked(f)) g.drawCenteredString(font, (gunCd + 19) / 20 + "s", ix, iy - 9, 0xFF6060);
-            else if (!FormsClient.unlocked(f)) g.drawCenteredString(font, "locked", ix, iy - 9, 0xC08080);
+            else if (!FormsClient.unlocked(f)) padlock(g, ix + 8, iy - 18);       // (a padlock in the corner, not "locked" written over the icon)
         }
         String mid = ch >= 1F ? "POWERED" : "charging";
         g.drawCenteredString(font, mid, 0, -4, ch >= 1F ? 0xFFD040 : 0xC0C0C0);
@@ -168,6 +174,15 @@ public class FormWheelScreen extends Screen {
     }
 
     /** A ring segment from angle a0 to a1 between radii r0 and r1. */
+    /** A little padlock (7 x 8), top-left at x, y. */
+    private static void padlock(GuiGraphics g, int x, int y) {
+        int c = 0xFFC08080, d = 0xFF402020;
+        g.fill(x + 1, y, x + 6, y + 1, c); g.fill(x + 1, y, x + 2, y + 4, c); g.fill(x + 5, y, x + 6, y + 4, c);   // shackle
+        g.fill(x - 1, y + 3, x + 8, y + 9, d);                                                                  // (dark edge)
+        g.fill(x, y + 4, x + 7, y + 8, c);                                                                      // body
+        g.fill(x + 3, y + 5, x + 4, y + 7, d);                                                                  // keyhole
+    }
+
     private static void arc(GuiGraphics g, float cx, float cy, float r0, float r1, float a0, float a1, int argb) {
         Matrix4f m = g.pose().last().pose();
         float a = (argb >>> 24) / 255F, r = (argb >> 16 & 255) / 255F, gr = (argb >> 8 & 255) / 255F, b = (argb & 255) / 255F;

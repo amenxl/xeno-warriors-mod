@@ -313,16 +313,26 @@ public class MainMenuScreen extends Screen {
         float hs = Math.max(1F, h / 300F);
         String help = entries.get(selected).help;
         float hx = w * 0.40F, hy = h - 26 * hs;
-        // wrapped to the bar's width (it used to run off the right edge on small windows), up to two lines going up
-        var helpLines = font.split(Component.literal(help), Math.max(40, (int) ((w * 0.98F - hx - 6) / hs)));
+        // wrapped to the bar's width (it used to run off the right edge on small windows), up to two lines going up -
+        // smaller text when it needs more (a longer description was cut off mid-sentence)
+        float ts = hs;
+        var helpLines = font.split(Component.literal(help), Math.max(40, (int) ((w * 0.98F - hx - 6) / ts)));
+        while (helpLines.size() > 2 && ts > hs * 0.62F) { ts -= hs * 0.04F; helpLines = font.split(Component.literal(help), Math.max(40, (int) ((w * 0.98F - hx - 6) / ts))); }
+        if (helpLines.size() > 2) {                                           // (still too long: the last line ends in "...")
+            var two = new java.util.ArrayList<>(helpLines.subList(0, 2));
+            StringBuilder sb = new StringBuilder();
+            two.get(1).accept((i, st, cp) -> { sb.appendCodePoint(cp); return true; });
+            two.set(1, Component.literal(font.plainSubstrByWidth(sb.toString(), (int) ((w * 0.98F - hx - 6) / ts) - font.width("...")) + "...").getVisualOrderText());
+            helpLines = two;
+        }
         int nl = Math.min(2, helpLines.size());
         float top = hy - (nl - 1) * 10 * hs;
         g.fill((int) (hx - 4), (int) (top - 3), (int) (w * 0.98F), (int) (hy + 9 * hs + 3), 0xD0101018);
         g.fill((int) (hx - 4), (int) (top - 3), (int) (hx - 2), (int) (hy + 9 * hs + 3), 0xFF000000 | col);
         for (int li = 0; li < nl; li++) {
             g.pose().pushPose();
-            g.pose().translate(hx + 2, top + li * 10 * hs, 0);
-            g.pose().scale(hs, hs, 1F);
+            g.pose().translate(hx + 2, top + li * 10 * hs + (hs - ts) * 4, 0);
+            g.pose().scale(ts, ts, 1F);
             g.drawString(font, helpLines.get(li), 0, 0, 0xF0F0F0, false);
             g.pose().popPose();
         }

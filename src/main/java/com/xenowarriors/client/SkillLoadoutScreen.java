@@ -61,6 +61,20 @@ public class SkillLoadoutScreen extends Screen {
         return true;
     }
 
+
+    /** Text that fits its card: a little smaller if it has to be, and "..." only past that (names were cut off mid-word). */
+    private void fitText(GuiGraphics g, String s, int x, int y, int room, int color) {
+        int w = font.width(s);
+        if (w <= room) { g.drawString(font, s, x, y, color); return; }
+        float k = Math.max(0.75F, room / (float) w);
+        String shown = w * k <= room ? s : font.plainSubstrByWidth(s, (int) (room / k) - font.width("...")) + "...";
+        g.pose().pushPose();
+        g.pose().translate(x, y + (1 - k) * 4, 0);
+        g.pose().scale(k, k, 1F);
+        g.drawString(font, shown, 0, 0, color);
+        g.pose().popPose();
+    }
+
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         com.xenowarriors.client.menu.Flat.background(this, g);
@@ -111,9 +125,9 @@ public class SkillLoadoutScreen extends Screen {
             boolean pic = seasonOk && SkillIcons.get(e.skill().getId()) != null;
             if (pic) { SkillIcons.draw(g, e.skill().getId(), x + 5, y + 4, 32); if (!open) g.fill(x + 5, y + 4, x + 37, y + 36, 0xA0101018); }
             int tx = pic ? x + 41 : x + 8;
-            g.drawString(font, seasonOk ? font.plainSubstrByWidth(e.skill().getName().getString(), x + CARD_W - 4 - tx) : "???", tx, y + 6, open ? 0xFFFFFF : 0x777777);
+            fitText(g, seasonOk ? e.skill().getName().getString() : "???", tx, y + 6, x + CARD_W - 4 - tx, open ? 0xFFFFFF : 0x777777);
             String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : UltimaAnim.resource() + " " + com.xenowarriors.client.ClientSkillLevels.cost(e.skill().getId(), e.skill().getKarmaCost()) + "  CD " + com.xenowarriors.client.ClientSkillLevels.cooldown(e.skill().getId(), e.skill().getCooldownTicks()) / 20 + "s  T" + com.xenowarriors.client.ClientSkillLevels.tier(e.skill().getId()) + " Lv" + com.xenowarriors.client.ClientSkillLevels.level(e.skill().getId());
-            g.drawString(font, font.plainSubstrByWidth(line, x + CARD_W - 4 - tx), tx, y + 20, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
+            fitText(g, line, tx, y + 20, x + CARD_W - 4 - tx, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over && my >= 100 && my < height - 28) hover = !seasonOk ? "??? - Season " + e.season() + " content\nLocked so nothing gets spoiled. An operator can unlock it with /xeno season unlock " + e.season() : e.skill().getName().getString() + "\n" + desc(e.skill()) + (!seasonOk ? "\nSeason " + e.season() + " content - locked (no spoilers). An operator can unlock it with /xeno season unlock " + e.season() : open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
         }
         g.disableScissor();
